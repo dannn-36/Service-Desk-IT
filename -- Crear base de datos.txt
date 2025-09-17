@@ -1,0 +1,53 @@
+-- Crear base de datos
+CREATE DATABASE servicedesk;
+USE servicedesk;
+
+-- Tabla de usuarios (Empleado / Agente TI)
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL, -- Guardar con hash (bcrypt recomendado)
+    role ENUM('employee', 'agent') NOT NULL, -- Solo dos roles
+    department VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de tickets
+CREATE TABLE tickets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL, -- empleado que reporta
+    agent_id INT NULL,    -- agente asignado (puede ser NULL hasta que alguien lo tome)
+    category ENUM('hardware','software','network','email','access','other') NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    status ENUM('abierto','en-progreso','pendiente-usuario','resuelto','cerrado') 
+        DEFAULT 'abierto',
+    priority ENUM('baja','media','alta','urgente') DEFAULT 'media',
+    location VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Tabla de mensajes de los tickets (chat en tiempo real)
+CREATE TABLE ticket_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ticket_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Insertar usuarios de ejemplo
+INSERT INTO users (name, email, password, role, department) VALUES
+('Carlos Mendoza', 'carlos.mendoza@empresa.com', '123456', 'employee', 'Ventas'),
+('María González', 'maria.gonzalez@empresa.com', '123456', 'employee', 'Contabilidad'),
+('Roberto Silva', 'roberto.silva@empresa.com', '123456', 'employee', 'Marketing'),
+('Ana López', 'ana.lopez@empresa.com', 'admin123', 'agent', 'Soporte TI'),
+('Juan Pérez', 'juan.perez@empresa.com', 'admin123', 'agent', 'Soporte TI'),
+('Sofía Martínez', 'sofia.martinez@empresa.com', 'admin123', 'agent', 'Soporte TI');
+
