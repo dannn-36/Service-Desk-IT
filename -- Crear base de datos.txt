@@ -1,53 +1,171 @@
--- Crear base de datos
+-- ===========================================
+-- CREACIÓN DE LA BASE DE DATOS
+-- ===========================================
 CREATE DATABASE servicedesk;
 USE servicedesk;
 
--- Tabla de usuarios (Empleado / Agente TI)
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL, -- Guardar con hash (bcrypt recomendado)
-    role ENUM('employee', 'agent') NOT NULL, -- Solo dos roles
-    department VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- ===========================================
+-- TABLA DE NIVELES DE ACCESO
+-- ===========================================
+CREATE TABLE niveles_acceso (
+    id_nivel INT AUTO_INCREMENT PRIMARY KEY,
+    nivel INT NOT NULL,
+    nombre VARCHAR(50) NOT NULL
 );
 
--- Tabla de tickets
+-- ===========================================
+-- TABLA DE USUARIOS
+-- ===========================================
+CREATE TABLE usuarios (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_usuario VARCHAR(100) NOT NULL,
+    correo_usuario VARCHAR(150) UNIQUE NOT NULL,
+    contrasena_usuario VARCHAR(255) NOT NULL,
+    estado_usuario ENUM('activo','inactivo') DEFAULT 'activo',
+    fecha_hora_creacion_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===========================================
+-- TABLAS SEGÚN ROL
+-- ===========================================
+CREATE TABLE agentes (
+    id_agente INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_nivel INT NOT NULL,
+    especialidad_agente VARCHAR(100),
+    disponibilidad_agente BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_nivel) REFERENCES niveles_acceso(id_nivel)
+);
+
+CREATE TABLE clientes (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_nivel INT NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_nivel) REFERENCES niveles_acceso(id_nivel)
+);
+
+CREATE TABLE supervisores (
+    id_supervisor INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_nivel INT NOT NULL,
+    area_responsabilidad_supervisor VARCHAR(100),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_nivel) REFERENCES niveles_acceso(id_nivel)
+);
+
+CREATE TABLE administradores (
+    id_admin INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_nivel INT NOT NULL,
+    area_responsabilidad_admin VARCHAR(100),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_nivel) REFERENCES niveles_acceso(id_nivel)
+);
+
+-- ===========================================
+-- TABLAS DE SOPORTE DE TICKETS
+-- ===========================================
+CREATE TABLE tickets_estados (
+    id_estado INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_estado VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE tickets_categorias (
+    id_categoria INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_categoria VARCHAR(50) NOT NULL
+);
+
+-- ===========================================
+-- TABLA DE TICKETS
+-- ===========================================
 CREATE TABLE tickets (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL, -- empleado que reporta
-    agent_id INT NULL,    -- agente asignado (puede ser NULL hasta que alguien lo tome)
-    category ENUM('hardware','software','network','email','access','other') NOT NULL,
-    title VARCHAR(200) NOT NULL,
-    description TEXT NOT NULL,
-    status ENUM('abierto','en-progreso','pendiente-usuario','resuelto','cerrado') 
-        DEFAULT 'abierto',
-    priority ENUM('baja','media','alta','urgente') DEFAULT 'media',
-    location VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (agent_id) REFERENCES users(id) ON DELETE SET NULL
+    id_ticket INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT NOT NULL,
+    id_agente_asignado INT NULL,
+    id_estado_ticket INT NOT NULL,
+    id_categoria_ticket INT NOT NULL,
+    titulo_ticket VARCHAR(200) NOT NULL,
+    descripcion_ticket TEXT NOT NULL,
+    prioridad_ticket ENUM('baja','media','alta','urgente') DEFAULT 'media',
+    fecha_hora_creacion_ticket TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_hora_actualizacion_ticket TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+        ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE,
+    FOREIGN KEY (id_agente_asignado) REFERENCES agentes(id_agente) ON DELETE SET NULL,
+    FOREIGN KEY (id_estado_ticket) REFERENCES tickets_estados(id_estado),
+    FOREIGN KEY (id_categoria_ticket) REFERENCES tickets_categorias(id_categoria)
 );
 
--- Tabla de mensajes de los tickets (chat en tiempo real)
-CREATE TABLE ticket_messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ticket_id INT NOT NULL,
-    sender_id INT NOT NULL,
-    message TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+-- ===========================================
+-- TABLAS DE INTEGRACIONES
+-- ===========================================
+CREATE TABLE integraciones (
+    id_integracion INT AUTO_INCREMENT PRIMARY KEY,
+    id_ticket INT NOT NULL,
+    origen_integracion ENUM('correo','teams','slack','chatbot','api') NOT NULL,
+    referencia_integracion VARCHAR(255),
+    estado_integracion ENUM('recibido','procesado','error') DEFAULT 'recibido',
+    fecha_hora_creacion_integracion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_ticket) REFERENCES tickets(id_ticket) ON DELETE CASCADE
 );
 
--- Insertar usuarios de ejemplo
-INSERT INTO users (name, email, password, role, department) VALUES
-('Carlos Mendoza', 'carlos.mendoza@empresa.com', '123456', 'employee', 'Ventas'),
-('María González', 'maria.gonzalez@empresa.com', '123456', 'employee', 'Contabilidad'),
-('Roberto Silva', 'roberto.silva@empresa.com', '123456', 'employee', 'Marketing'),
-('Ana López', 'ana.lopez@empresa.com', 'admin123', 'agent', 'Soporte TI'),
-('Juan Pérez', 'juan.perez@empresa.com', 'admin123', 'agent', 'Soporte TI'),
-('Sofía Martínez', 'sofia.martinez@empresa.com', 'admin123', 'agent', 'Soporte TI');
+-- ===========================================
+-- MENSAJES Y ARCHIVOS DE TICKETS
+-- ===========================================
+CREATE TABLE ticket_mensajes (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+    id_ticket INT NOT NULL,
+    id_usuario INT NOT NULL,
+    mensaje_ticket TEXT NOT NULL,
+    fecha_hora_creacion_mensaje TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_ticket) REFERENCES tickets(id_ticket) ON DELETE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
 
+CREATE TABLE ticket_archivos (
+    id_archivo INT AUTO_INCREMENT PRIMARY KEY,
+    id_ticket INT NOT NULL,
+    id_usuario INT NOT NULL,
+    ruta_archivo_ticket VARCHAR(255) NOT NULL,
+    fecha_hora_creacion_mensaje TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_ticket) REFERENCES tickets(id_ticket) ON DELETE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+-- ===========================================
+-- AUDITORÍA Y SESIONES
+-- ===========================================
+CREATE TABLE auditoria (
+    id_auditoria INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    accion_auditoria VARCHAR(200) NOT NULL,
+    detalle_auditoria TEXT,
+    fecha_auditoria TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE sesiones (
+    id_sesion INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    fecha_hora_inicio_sesion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_hora_fin_sesion TIMESTAMP NULL,
+    sesion_activa BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+-- ===========================================
+-- DATOS INICIALES
+-- ===========================================
+INSERT INTO niveles_acceso (nivel, nombre) VALUES
+(1, 'Acceso básico - Usuarios finales'),
+(2, 'Acceso intermedio - Agentes'),
+(3, 'Acceso avanzado - Supervisores'),
+(4, 'Acceso total - Administradores');
+
+INSERT INTO tickets_estados (nombre_estado) VALUES
+('abierto'), ('en-progreso'), ('pendiente'), ('resuelto'), ('cerrado'), ('reabierto');
+
+INSERT INTO tickets_categorias (nombre_categoria) VALUES
+('hardware'), ('software'), ('red'), ('correo'), ('acceso'), ('otro');
