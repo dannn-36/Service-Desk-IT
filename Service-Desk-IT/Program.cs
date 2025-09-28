@@ -1,7 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+//using Service_Desk_IT.Data;
+
+
 var builder = WebApplication.CreateBuilder(args);
+
+
+//coneccion con EF
+//builder.Services.AddDbContext<ServiceDeskContext>(options =>
+  //  options.UseMySql(builder.Configuration.GetConnectionString("ServiceDeskDB"),
+    //    new MySqlServerVersion(new Version(8, 0, 41)))); 
+
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+
 
 var app = builder.Build();
 
@@ -14,14 +28,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseAuthorization();
 
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 
 app.Run();

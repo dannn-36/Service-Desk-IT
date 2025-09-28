@@ -1,0 +1,41 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Service_Desk_IT.Models;
+
+public partial class Ticket
+{
+    public int IdTicket { get; set; }
+
+    public int IdCliente { get; set; }
+
+    public int? IdAgenteAsignado { get; set; }
+
+    public int IdEstadoTicket { get; set; }
+
+    public int IdCategoriaTicket { get; set; }
+
+    public string TituloTicket { get; set; } = null!;
+
+    public string DescripcionTicket { get; set; } = null!;
+
+    public string? PrioridadTicket { get; set; }
+
+    public DateTime? FechaHoraCreacionTicket { get; set; }
+
+    public DateTime? FechaHoraActualizacionTicket { get; set; }
+
+    public virtual Agente? IdAgenteAsignadoNavigation { get; set; }
+
+    public virtual TicketsCategoria IdCategoriaTicketNavigation { get; set; } = null!;
+
+    public virtual Cliente IdClienteNavigation { get; set; } = null!;
+
+    public virtual TicketsEstado IdEstadoTicketNavigation { get; set; } = null!;
+
+    public virtual ICollection<Integracione> Integraciones { get; set; } = new List<Integracione>();
+
+    public virtual ICollection<TicketArchivo> TicketArchivos { get; set; } = new List<TicketArchivo>();
+
+    public virtual ICollection<TicketMensaje> TicketMensajes { get; set; } = new List<TicketMensaje>();
+}

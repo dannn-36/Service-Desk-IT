@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service-Desk-IT", "Service-Desk-IT\Service-Desk-IT.csproj", "{4B5ABB3B-180E-4196-B420-006F23733CA4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service_Desk_IT", "Service-Desk-IT\Service_Desk_IT.csproj", "{4B5ABB3B-180E-4196-B420-006F23733CA4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
