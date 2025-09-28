@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-//using Service_Desk_IT.Data;
+using Service_Desk_IT.Data;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 //coneccion con EF
-//builder.Services.AddDbContext<ServiceDeskContext>(options =>
-  //  options.UseMySql(builder.Configuration.GetConnectionString("ServiceDeskDB"),
-    //    new MySqlServerVersion(new Version(8, 0, 41)))); 
+builder.Services.AddDbContext<ServiceDeskContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("ServiceDeskDB"),
+        new MySqlServerVersion(new Version(8, 0, 41)))); 
 
 
 
